@@ -51,10 +51,10 @@ target_compile_definitions(GSL INTERFACE
 )
 
 # add include folders to the library and targets that consume it
-target_include_directories(GSL INTERFACE
-    $<BUILD_INTERFACE:
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    >
+target_include_directories(GSL
+  INTERFACE
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
 if ((CMAKE_VERSION GREATER 3.7.9) OR (CMAKE_VERSION EQUAL 3.7.9))
@@ -72,6 +72,33 @@ if ((CMAKE_VERSION GREATER 3.7.9) OR (CMAKE_VERSION EQUAL 3.7.9))
     endif()
 endif()
 
+include(CMakePackageConfigHelpers)
+set(gsl_VERSION "0.0.1")
+write_basic_package_version_file("${CMAKE_BINARY_DIR}/gsl-config-version.cmake"
+  VERSION ${gsl_VERSION}
+  COMPATIBILITY SameMajorVersion
+)
+configure_package_config_file(
+  "${CMAKE_SOURCE_DIR}/gsl-config.cmake.in"
+  "${CMAKE_BINARY_DIR}/gsl-config.cmake"
+  INSTALL_DESTINATION share/gsl/cmake
+)
+install(
+  FILES
+    "${CMAKE_BINARY_DIR}/gsl-config-version.cmake"
+    "${CMAKE_BINARY_DIR}/gsl-config.cmake"
+  DESTINATION share/gsl/cmake
+)
+
+install(TARGETS GSL EXPORT GSL_targets
+  INCLUDES DESTINATION include
+)
+install(EXPORT GSL_targets
+  FILE gsl-targets.cmake
+  NAMESPACE gsl::
+  DESTINATION share/gsl/cmake
+)
+
 install(
     DIRECTORY include/gsl
     DESTINATION include
@@ -79,6 +106,6 @@ install(
 
 option(GSL_TEST "Generate tests." ${GSL_STANDALONE_PROJECT})
 if (GSL_TEST)
-	enable_testing()
-	add_subdirectory(tests)
+  enable_testing()
+  add_subdirectory(tests)
 endif ()
